@@ -1,0 +1,20 @@
+[project]
+name = "dbcommons"
+version = "0.1.0"
+description = "db setup and connection utilities common to multiple projects"
+readme = "README.md"
+authors = [
+    { name = "Stephanie Johnson", email = "johnson.stephanie076@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "psycopg>=3.3.3",
+    "pyyaml>=6.0.3",
+]
+
+[project.scripts]
+dbcommons = "dbcommons:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
