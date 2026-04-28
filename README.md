@@ -1,4 +1,4 @@
-# DBCOmmons: Common db setup and connection utilities
+# DBCommons: Common db setup and connection utilities
 
 WIP
 
