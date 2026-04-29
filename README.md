@@ -1,6 +1,8 @@
 # DBCommons: Common db setup and connection utilities
 
-WIP
+Code to initialize a postgres database, add users, and a class to manage connections.
+
+Geared towards databases that load from csvs (like Fintrackr and ForkWise).
 
 ## TODO
 
