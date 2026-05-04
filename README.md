@@ -28,11 +28,16 @@ schema_path='<path_to_schema.sql>'
 python ./src/dbcommons/init_db.py '<owner_pw>' $config_path $schema_path
 ```
 
+### Add a user
+```
+python ./src/dbcommons/add_user.py <new user name> <new user password> <db admin password>
+```
+
 ## TODO
 
 `db_conn._import_csv` needs to be generalized - have column names as inputs.
 
-Are the testing utils still useful if I subclass DBConn?
+Testing utils assumes "tests/fixtures" structure which is not what FinTrackr has - change
 
 `SQL_to_EDL.py` has several bugs with current Fintrackr schema.
 
