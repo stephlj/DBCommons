@@ -42,7 +42,7 @@ def init_db(
         db_name = config["db"]["db_name"]
         owner = config["db"]["admin_name"]
 
-    path_to_initscript = os.path.join(os.getcwd(),"src","fintrackr","Init_New_db.sh")  
+    path_to_initscript = os.path.join(os.getcwd(),"src","dbcommons","Init_New_db.sh")  
     logger.debug(f"Attempting to run init script at {path_to_initscript}")
 
     subprocess.run(["chmod", "+x", path_to_initscript])
