@@ -9,10 +9,9 @@ import yaml
 
 from dbcommons.init_db import init_db
 from dbcommons.add_user import add_user
-import dbcommons.db_conn
 
-TEST_CONFIG_PATH = os.path.join(os.getcwd(),"tests","data","test_config.yml")
-TEST_DATA_PATH = os.path.join(os.getcwd(),"tests","data")
+TEST_CONFIG_PATH = os.path.join(os.getcwd(),"tests","fixtures","test_config.yml")
+TEST_DATA_PATH = os.path.join(os.getcwd(),"tests","fixtures")
 
 def config_params() -> dict:
     with open(TEST_CONFIG_PATH, "r") as config_file:
@@ -44,9 +43,9 @@ def set_up_test_DB(params: dict) -> None:
                 path_to_config=TEST_CONFIG_PATH
     )
 
-    db_conn = dbcommons.db_conn.DBConn(user=params["user"], pw=params["user_pw"], db_name=params["test_db_name"])
-
-    return db_conn
+    # Since FinTrackr and ForkWise will subclass DBConn - this line won't work here
+    # db_conn = dbcommons.db_conn.DBConn(user=params["user"], pw=params["user_pw"], db_name=params["test_db_name"])
+    # return db_conn
 
 def tear_down_test_DB(db_conn: object, params: dict) -> None:
     """

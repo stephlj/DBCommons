@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 
 def init_db(
         pw: str,
-        path_to_config: str
+        path_to_config: str,
+        path_to_schema: str
     ) -> None:
     """
     One-time setup for initializing the database.
@@ -25,6 +26,10 @@ def init_db(
     ----------
     pw : str
         Admin account pw for db
+    path_to_config : str
+        relative path to config file with db name, owner name
+    path_to_schema : str
+        relative path to schema file for db
 
     Returns
     -------
@@ -37,12 +42,12 @@ def init_db(
         db_name = config["db"]["db_name"]
         owner = config["db"]["admin_name"]
 
-    path_to_initscript = os.path.join(os.getcwd(),"src","fintrackr","Init_New_db.sh")  
+    path_to_initscript = os.path.join(os.getcwd(),"src","dbcommons","Init_New_db.sh")  
     logger.debug(f"Attempting to run init script at {path_to_initscript}")
 
     subprocess.run(["chmod", "+x", path_to_initscript])
 
-    exit_code = subprocess.run([path_to_initscript, db_name, owner, pw])
+    exit_code = subprocess.run([path_to_initscript, db_name, owner, pw, path_to_schema])
     logger.debug(f"Init script ran with exit code: {exit_code.returncode}, \
                  stdout: {exit_code.stdout}, \
                     stderr: {exit_code.stderr}")
@@ -57,6 +62,6 @@ if __name__ == "__main__":
     logging.basicConfig(level="INFO", format=DEFAULT_LOGGING_FORMAT)
 
     if len(sys.argv) != 3:
-        raise TypeError("init_db.py takes exactly two input args (db owner pw to set and path to configuration file)")
+        raise TypeError("init_db.py takes exactly three input args (db owner pw to set, path to configuration file, path to schema file)")
 
-    init_db(pw=sys.argv[1],path_to_config=sys.argv[2])
+    init_db(pw=sys.argv[1],path_to_config=sys.argv[2], path_to_schema=sys.argv[3])
