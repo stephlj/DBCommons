@@ -7,6 +7,7 @@ Copyright (c) 2025 Stephanie Johnson
 import os, sys, subprocess
 import logging
 import yaml
+import importlib.resources as pkg_resources
 
 from dbcommons.utils import DEFAULT_LOGGING_FORMAT
 
@@ -42,18 +43,13 @@ def init_db(
         db_name = config["db"]["db_name"]
         owner = config["db"]["admin_name"]
 
-    path_to_initscript = os.path.join(os.path.dirname(os.path.abspath(__file__)),"Init_New_db.sh")  
-    logger.debug(f"Attempting to run init script at {path_to_initscript}")
+    with pkg_resources.as_file(
+        pkg_resources.files("dbcommons").joinpath("Init_New_db.sh")
+    ) as script_path:
+        subprocess.run(["chmod", "+x", str(script_path)])
+        # check=True means execution will halt if there's a non-zero exit code
+        subprocess.run([str(script_path), db_name, owner, pw, path_to_schema], check=True)
 
-    subprocess.run(["chmod", "+x", path_to_initscript])
-
-    exit_code = subprocess.run([path_to_initscript, db_name, owner, pw, path_to_schema])
-    logger.debug(f"Init script ran with exit code: {exit_code.returncode}, \
-                 stdout: {exit_code.stdout}, \
-                    stderr: {exit_code.stderr}")
-
-    #TODO capture error(s) from bash script - eg if db already exists so createdb errors
-    assert exit_code.returncode == 0, "Failed to execute script to create db"
 
     logger.info(f"Script to create database named {db_name} executed successfully")
 
