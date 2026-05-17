@@ -57,7 +57,7 @@ def init_db(
 if __name__ == "__main__":
     logging.basicConfig(level="INFO", format=DEFAULT_LOGGING_FORMAT)
 
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         raise TypeError("init_db.py takes exactly three input args (db owner pw to set, path to configuration file, path to schema file)")
 
     init_db(pw=sys.argv[1],path_to_config=sys.argv[2], path_to_schema=sys.argv[3])
