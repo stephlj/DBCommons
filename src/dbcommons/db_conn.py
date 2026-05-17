@@ -10,12 +10,7 @@ import os
 
 from typing import List
 
-from dbcommons.utils import DEFAULT_LOGGING_FORMAT
-
-logger = logging.getLogger(__name__)
-
 class DBConn:
-    logging.basicConfig(level="INFO", format=DEFAULT_LOGGING_FORMAT)
 
     def __init__(self, user: str, pw: str, db_name: str):
         self.user = user
@@ -23,6 +18,8 @@ class DBConn:
         self.db_name = db_name
         self._conn = psycopg.connect(f"dbname={self.db_name} user={self.user} password={self.pw} host='localhost'")
         self._conn.autocommit = True
+
+        self._logger = logging.getLogger(__name__)
 
     def close(self):
         try:
