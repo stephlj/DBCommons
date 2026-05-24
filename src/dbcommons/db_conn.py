@@ -29,16 +29,18 @@ class DBConn:
             self._logger.exception("db_conn object failed to close")
             pass
     
-    def _import_file(self, dest_table: str, path_to_file: str) -> int:
+    def _import_file(self, col_types: List[str], dest_table: str, path_to_file: str) -> int:
         """
         To avoid granting permission to read server files, I use a client-side copy
         This function wraps that copy command.
 
-        ASSUMES column type order of (date, amount, description), ie (date, numeric, text) 
-        which works for both balances and transactions per my current loading schema.
+        Assumes no header in the csv.
         
         Parameters
         ----------
+        col_types : List(str)
+            List of strings representing col SQL types, in order they appear in the csv to load
+            E.g. ["date", "numeric", "text"]
         dest_table: str
             Name of table to copy into (should already exist)
         path_to_file: str
@@ -64,7 +66,7 @@ class DBConn:
             try:
                 with open(path_to_file, "r") as f:
                     with curs.copy(f"COPY {dest_table} FROM STDIN WITH (FORMAT csv, HEADER false)") as copy:
-                        copy.set_types(["date", "numeric", "text"]) # TODO should this not be hardcoded, if I'm not hard-coding dest_table?
+                        copy.set_types(col_types) # TODO check same length as num cols in input csv?
                         for line in f:
                             copy.write(line) # TODO figure out the difference between write and write_row
                 response = 1
