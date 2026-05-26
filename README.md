@@ -35,8 +35,6 @@ python ./src/dbcommons/add_user.py <new user name> <new user password> <db admin
 
 ## TODO
 
-`db_conn._import_csv` needs to be generalized - have column names as inputs.
-
 Testing utils assumes "tests/fixtures" structure which is not what FinTrackr has - change
 
 `SQL_to_EDL.py` has several bugs with current Fintrackr schema.
