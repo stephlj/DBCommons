@@ -29,12 +29,13 @@ class DBConn:
             self._logger.exception("db_conn object failed to close")
             pass
     
-    def _import_file(self, col_types: List[str], dest_table: str, path_to_file: str) -> int:
+    def _import_file(self, col_types: List[str], dest_table: str, path_to_file: str) -> None:
         """
         To avoid granting permission to read server files, I use a client-side copy
         This function wraps that copy command.
 
-        Assumes no header in the csv.
+        Assumes no header in the csv. Assumes column order in csv is the same as the order in col_types - 
+        any checking of this assumption should be handled by the calling function.
         
         Parameters
         ----------
@@ -42,38 +43,36 @@ class DBConn:
             List of strings representing col SQL types, in order they appear in the csv to load
             E.g. ["date", "numeric", "text"]
         dest_table: str
-            Name of table to copy into (should already exist)
+            Name of table to copy into (needs to already exist)
         path_to_file: str
             Path to file whose contents are to be copied. Must be a csv.
         
         Returns
         -------
-        int:
-            1 if successful copy, 0 if an exception occurred
+        None. Raises exceptions if unsuccessful.
 
         """
-        response = 0 # assume failure :)
 
+        # TODO are these exceptions already handled by curs.copy elegantly?
         if not os.path.isfile(path_to_file):
-            self._logger.error(f"DBConn._import_file: {path_to_file} not a path to a file that exists")
-            return response
+            msg = f"DBConn._import_file: {path_to_file} not a path to a file that exists"
+            self._logger.error(msg)
+            raise ValueError(msg)
         if not os.path.splitext(path_to_file)[1] == ".csv":
-            self._logger.error(f"DBConn._import_file: {path_to_file} not a csv")
-            return response
+            msg = f"DBConn._import_file: {path_to_file} not a csv"
+            self._logger.error(msg)
+            raise ValueError(msg)
 
         with self._conn.cursor() as curs: 
             self._logger.info(f"Importing from file {path_to_file}")
             try:
                 with open(path_to_file, "r") as f:
                     with curs.copy(f"COPY {dest_table} FROM STDIN WITH (FORMAT csv, HEADER false)") as copy:
-                        copy.set_types(col_types) # TODO check same length as num cols in input csv?
+                        copy.set_types(col_types)
                         for line in f:
                             copy.write(line) # TODO figure out the difference between write and write_row
-                response = 1
             except Exception as e:
                 self._logger.error(f"Failed to import from file {path_to_file} with exception: {e}")
-            finally:
-                return response
     
     def execute_action(self, query: str, vals: tuple = ()) -> str:
         """
