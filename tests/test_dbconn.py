@@ -14,6 +14,9 @@ class TestDBConn(unittest.TestCase):
         utils.set_up_test_DB(params=cls.params)
         cls.conn = DBConn(user=cls.params["user"], pw=cls.params["user_pw"], db_name=cls.params["test_db_name"])
 
+        cls.csv_cols = [('fruit','text'), ('nums', 'real')]
+        cls.col_types = ", ".join(f'{b}' for _, b in cls.csv_cols)
+
     @classmethod
     def tearDownClass(cls):
         utils.tear_down_test_DB(db_conn=cls.conn, params=cls.params)
@@ -22,14 +25,16 @@ class TestDBConn(unittest.TestCase):
         # Does it work at all - see test_csv_to_staging
         
         # Does it raise the right exceptions
-        pass
+        with self.assertRaises(FileNotFoundError):
+            self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "blah.csv"))
+        
+        with self.assertRaises(ValueError):
+            self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "test_config.yml"))
         
     
     def test_csv_to_staging(self):
         self.addCleanup(self.conn.execute_action, "DROP TABLE staging;")
 
-        csv_cols = [('fruit','text'), ('nums', 'real')]
-        col_types = ", ".join(f'{b}' for _, b in csv_cols)
-        col_and_type = ", ".join(f'{a} {b}' for a, b in csv_cols)
+        col_and_type = ", ".join(f'{a} {b}' for a, b in self.csv_cols)
         self.conn.execute_action(f"CREATE TABLE staging ({col_and_type}); ")
-        self.conn._import_csv(col_types=col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "test.csv"))
+        self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "test.csv"))
