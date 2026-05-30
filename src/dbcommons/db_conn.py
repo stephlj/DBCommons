@@ -240,7 +240,7 @@ class DBConn:
             self._logger.error("Failed to create staging table")
             raise ValueError("Failed to create staging table before loading new file")
 
-        r2 = self._import_file(col_types=csv_columns, dest_table="staging", path_to_file=csv_path)
+        r2 = self._import_csv(col_types=csv_columns, dest_table="staging", path_to_file=csv_path)
         if r2==0: # This will happen if copy fails; eg if try to insert too many columns
             self._logger.info("No rows added to staging table")
             return 0
