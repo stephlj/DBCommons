@@ -35,7 +35,9 @@ def set_up_test_DB(params: dict) -> None:
         Output of config_params
     """
 
-    init_db(pw=params["owner_pw"], path_to_config=TEST_CONFIG_PATH)
+    init_db(pw=params["owner_pw"], 
+            path_to_config=TEST_CONFIG_PATH, 
+            path_to_schema=os.path.join(TEST_DATA_PATH, "test_schema.sql"))
 
     add_user(name=params["user"], 
                 pw=params["user_pw"], 

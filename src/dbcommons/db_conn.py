@@ -29,7 +29,7 @@ class DBConn:
             self._logger.exception("db_conn object failed to close")
             pass
     
-    def _import_file(self, col_types: List[str], dest_table: str, path_to_file: str) -> None:
+    def _import_csv(self, col_types: List[str], dest_table: str, path_to_file: str) -> None:
         """
         To avoid granting permission to read server files, I use a client-side copy
         This function wraps that copy command.
@@ -39,7 +39,7 @@ class DBConn:
         
         Parameters
         ----------
-        col_types : List(str)
+        col_types : List[str]
             List of strings representing col SQL types, in order they appear in the csv to load
             E.g. ["date", "numeric", "text"]
         dest_table: str
