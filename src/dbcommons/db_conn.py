@@ -9,6 +9,7 @@ import logging
 import os
 
 from typing import List
+from psycopg import errors as psql_errors
 
 class DBConn:
 
@@ -220,15 +221,17 @@ class DBConn:
         
         # Drop staging table if it already exists
         # This set of logic feels goofy ... 
-        rows_before = 0
         try:
             rows_before = self.execute_scalar("SELECT COUNT(*) FROM staging;")
+        except psql_errors.UndefinedTable as e:
+            self._logger.info("Table staging does not exist; will create")
+            rows_before = None
         except Exception as e:
-            self._logger.debug(f"Query of staging table did not execute with exception: {e}")
-        if rows_before is None:
-            rows_before = 0
-        if rows_before != 0:
-            self._logger.info("Staging table still exists with content before loading new file")
+            self._logger.error(f"Table staging exists but query of staging table did not execute with exception: {e}")
+            raise
+
+        if rows_before is not None:
+            self._logger.info("Staging table still exists before loading new file; dropping staging table")
             r = self.execute_action("DROP TABLE staging;")
             if r != "DROP TABLE":
                 self._logger.error("Unable to drop staging table")
