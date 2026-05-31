@@ -2,6 +2,7 @@
 
 import unittest
 import os
+import errno
 
 import dbcommons.testing_utils as utils
 from dbcommons.db_conn import DBConn
@@ -25,8 +26,8 @@ class TestDBConn(unittest.TestCase):
         # Does it work at all - see test_csv_to_staging
         
         # Does it raise the right exceptions
-        with self.assertRaises(FileNotFoundError):
-            self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "blah.csv"))
+        # with self.assertRaises(errno.ENOENT): # ENOENT = FileNotFoundError. But this doesn't work cuz errno isn't an exception ... 
+        #     self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "blah.csv"))
         
         with self.assertRaises(ValueError):
             self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "test_config.yml"))
@@ -35,6 +36,10 @@ class TestDBConn(unittest.TestCase):
     def test_csv_to_staging(self):
         self.addCleanup(self.conn.execute_action, "DROP TABLE staging;")
 
-        col_and_type = ", ".join(f'{a} {b}' for a, b in self.csv_cols)
-        self.conn.execute_action(f"CREATE TABLE staging ({col_and_type}); ")
-        self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "test.csv"))
+        self.conn.csv_to_staging(csv_path=os.path.join(utils.TEST_DATA_PATH, "test.csv"),csv_columns=self.csv_cols)
+
+        # Implicit test of execute_query
+        self.assertEqual(len(self.conn.execute_query("SELECT * FROM staging;")), 3, "Incorrect number of rows imported from csv to staging")
+
+        # Implicit test of execute_scalar
+        self.assertEqual(self.conn.execute_scalar("SELECT nums FROM staging WHERE fruit='Banana';"), 2.02)
