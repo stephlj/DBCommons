@@ -2,7 +2,6 @@
 
 import unittest
 import os
-import errno
 
 import dbcommons.testing_utils as utils
 from dbcommons.db_conn import DBConn
@@ -26,8 +25,8 @@ class TestDBConn(unittest.TestCase):
         # Does it work at all - see test_csv_to_staging
         
         # Does it raise the right exceptions
-        # with self.assertRaises(errno.ENOENT): # ENOENT = FileNotFoundError. But this doesn't work cuz errno isn't an exception ... 
-        #     self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "blah.csv"))
+        with self.assertRaises(ValueError): 
+            self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "blah.csv"))
         
         with self.assertRaises(ValueError):
             self.conn._import_csv(col_types=self.col_types, dest_table="staging", path_to_file=os.path.join(utils.TEST_DATA_PATH, "test_config.yml"))

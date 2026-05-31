@@ -54,13 +54,12 @@ class DBConn:
 
         """
 
-        # FileNotFoundError will be raised automatically:
-        # if not os.path.isfile(path_to_file):
-        #     msg = f"DBConn._import_file: {path_to_file} not a path to a file that exists"
-        #     self._logger.error(msg)
-        #     raise ValueError(msg)
+        # Handle some common possible exceptions up front:
+        if not os.path.isfile(path_to_file):
+            msg = f"DBConn._import_file: {path_to_file} not a path to a file that exists"
+            self._logger.error(msg)
+            raise ValueError(msg)
         
-        # But it won't check file type first
         if not os.path.splitext(path_to_file)[1] == ".csv":
             msg = f"DBConn._import_file: {path_to_file} not a csv"
             self._logger.error(msg)
