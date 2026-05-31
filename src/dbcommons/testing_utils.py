@@ -12,9 +12,10 @@ from dbcommons.add_user import add_user
 
 TEST_CONFIG_PATH = os.path.join(os.getcwd(),"tests","fixtures","test_config.yml")
 TEST_DATA_PATH = os.path.join(os.getcwd(),"tests","fixtures")
+TEST_SCHEMA_PATH = os.path.join(TEST_DATA_PATH, "test_schema.sql")
 
-def config_params() -> dict:
-    with open(TEST_CONFIG_PATH, "r") as config_file:
+def config_params(config_path: str = TEST_CONFIG_PATH) -> dict:
+    with open(config_path, "r") as config_file:
         config = yaml.safe_load(config_file)
         test_db_name = config["db"]["db_name"]
         test_owner = config["db"]["admin_name"]
@@ -24,10 +25,11 @@ def config_params() -> dict:
         "test_owner": test_owner,
         "owner_pw": "test_pw",
         "user": "test_user",
-        "user_pw" :"pw"
+        "user_pw" : "pw",
+        "config_path" : config_path
     }
 
-def set_up_test_DB(params: dict) -> None:
+def set_up_test_DB(params: dict, path_to_schema: str = TEST_SCHEMA_PATH) -> None:
     """
     Parameters
     ----------
@@ -36,13 +38,13 @@ def set_up_test_DB(params: dict) -> None:
     """
 
     init_db(pw=params["owner_pw"], 
-            path_to_config=TEST_CONFIG_PATH, 
-            path_to_schema=os.path.join(TEST_DATA_PATH, "test_schema.sql"))
+            path_to_config=params["config_path"], 
+            path_to_schema = path_to_schema)
 
     add_user(name=params["user"], 
                 pw=params["user_pw"], 
                 admin_pw = params["owner_pw"], 
-                path_to_config=TEST_CONFIG_PATH
+                path_to_config=params["config_path"]
     )
 
     # Since FinTrackr and ForkWise will subclass DBConn - this line won't work here
@@ -66,6 +68,7 @@ def tear_down_test_DB(db_conn: object, params: dict) -> None:
     exit_code3 = subprocess.run(["dropuser",params["test_owner"]])
 
     # We put these at the end to ensure teardown completes even if one of these fails.
+    # If using this in the context of a class like unittest.TestCase:
     # Note that the @classmethod decorator changes the first arg to the class not
     # an instance of the class, so self.assertEqual fails.
     assert exit_code.returncode==0, "Failed to remove testing db, must now remove manually"

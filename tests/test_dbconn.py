@@ -36,6 +36,7 @@ class TestDBConn(unittest.TestCase):
     def test_csv_to_staging(self):
         self.addCleanup(self.conn.execute_action, "DROP TABLE staging;")
 
+        # Implicit test of _import_csv, as well as execute_action, execute_scalar
         self.conn.csv_to_staging(csv_path=os.path.join(utils.TEST_DATA_PATH, "test.csv"),csv_columns=self.csv_cols)
 
         # Implicit test of execute_query
