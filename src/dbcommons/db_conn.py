@@ -66,7 +66,7 @@ class DBConn:
             raise ValueError(msg)
 
         with self._conn.cursor() as curs: 
-            self._logger.info(f"Importing from file {path_to_file}")
+            self._logger.debug(f"Importing from file {path_to_file}")
             try:
                 with open(path_to_file, "r") as f:
                     with curs.copy(f"COPY {dest_table} FROM STDIN WITH (FORMAT csv, HEADER false)") as copy:
@@ -111,7 +111,7 @@ class DBConn:
         """
         # The with statement automatically closes cursor after execution
         with self._conn.cursor() as curs: 
-            self._logger.info(f"Executing query: {query}, with vals: {vals}")
+            self._logger.debug(f"Executing query: {query}, with vals: {vals}")
             curs.execute(query, vals)
             return curs.statusmessage
 
@@ -146,7 +146,7 @@ class DBConn:
         """
 
         with self._conn.cursor() as curs: 
-            self._logger.info(f"Executing query: {query}, with vals: {vals}")
+            self._logger.debug(f"Executing query: {query}, with vals: {vals}")
             curs.execute(query, vals)
             return curs.fetchall() # Returns a list of tuples (each row a tuple)
         
@@ -175,7 +175,7 @@ class DBConn:
         """
 
         with self._conn.cursor() as curs: 
-            self._logger.info(f"Executing query: {query}, with vals: {vals}")
+            self._logger.debug(f"Executing query: {query}, with vals: {vals}")
             curs.execute(query, vals)
             row_tuple = curs.fetchall() # Returns a list of tuples (each row a tuple)
         
@@ -223,14 +223,14 @@ class DBConn:
         try:
             rows_before = self.execute_scalar("SELECT COUNT(*) FROM staging;")
         except psql_errors.UndefinedTable as e:
-            self._logger.info("Table staging does not exist; will create")
+            self._logger.debug("Table staging does not exist; will create")
             rows_before = None
         except Exception as e:
             self._logger.error(f"Table staging exists but query of staging table did not execute with exception: {e}")
             raise
 
         if rows_before is not None:
-            self._logger.info("Staging table still exists before loading new file; dropping staging table")
+            self._logger.debug("Staging table still exists before loading new file; dropping staging table")
             r = self.execute_action("DROP TABLE staging;")
             if r != "DROP TABLE":
                 self._logger.error("Unable to drop staging table")
@@ -250,6 +250,6 @@ class DBConn:
 
         # Query how many rows are now in staging table
         rows_after = self.execute_scalar("SELECT COUNT(*) FROM staging;")
-        self._logger.info(f"After loading new transactions, staging has {rows_after} rows")
+        self._logger.debug(f"After loading new transactions, staging has {rows_after} rows")
 
         return rows_after
