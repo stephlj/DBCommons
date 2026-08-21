@@ -194,13 +194,56 @@ class DBConn:
         
         return row_tuple[0][0]
     
+    def create_staging(self, col_defs: List[tuple[str]]) -> None:
+        """ 
+        Create a staging table; error if exists
+
+        Parameters
+        ----------
+        col_defs : List[tuple[str]]
+            Columns of the staging table.
+            Each tuple in the list is (col_name, col_type), eg ('posted date', 'date').
+            Note types need to be strings not classes (can be obtained by <type>.__name__)
+
+        Returns
+        -------
+        None
+        """
+
+        try:
+            rows_before = self.execute_scalar("SELECT COUNT(*) FROM staging;")
+            if rows_before >= 0 :
+                msg = "Staging table already exists!"
+                self._logger.error(msg)
+                raise ValueError(msg)
+        except psql_errors.UndefinedTable as e:
+            self._logger.debug("Table staging does not exist; will create")
+        except Exception as e:
+            self._logger.error(f"Table staging exists but query of staging table did not execute with exception: {e}")
+            raise
+
+        col_and_type = ", ".join(f'{a} {b}' for a, b in col_defs)
+        r1 = self.execute_action(f"CREATE TABLE staging ({col_and_type});")
+        if r1 != "CREATE TABLE":
+            msg = "Failed to create staging table"
+            self._logger.error(msg)
+            raise ValueError(msg)
+
+    def drop_staging(self) -> None:
+        # Drop the staging table
+        r = self.execute_action("DROP TABLE staging;")
+        if r != "DROP TABLE":
+            msg = "Unable to drop staging table"
+            self._logger.error(msg)
+            raise ValueError(msg)
+
+    
     def csv_to_staging(self, csv_path: str, csv_columns: List[tuple[str]]) -> int:
         """ 
         FinTracker and ForkWise accept csv inputs.
-        Load csv from disk into a temporary staging table; calling function loads from the
+        Load csv from disk into a temporary staging table. 
+        Calling function must create and drop the staging table, after loading from
         staging table into the relevant permanent table(s) in the db.
-
-        WILL OVERWRITE STAGING IF ALREADY EXISTS!
 
         Parameters
         ----------
@@ -214,33 +257,18 @@ class DBConn:
         Returns
         -------
         int
-            Length of a query of how many rows were added to the staging table
-
+            Number of rows added to the staging table
         """
         
-        # Drop staging table if it already exists
-        # This set of logic feels goofy ... 
         try:
             rows_before = self.execute_scalar("SELECT COUNT(*) FROM staging;")
+            if rows_before > 0:
+                msg = "Staging table already exists with content, cannot proceed with new csv load"
+                self._logger.error(msg)
+                raise ValueError(msg)
         except psql_errors.UndefinedTable as e:
-            self._logger.debug("Table staging does not exist; will create")
-            rows_before = None
-        except Exception as e:
-            self._logger.error(f"Table staging exists but query of staging table did not execute with exception: {e}")
+            self._logger.error("Staging table must already exist before csv load")
             raise
-
-        if rows_before is not None:
-            self._logger.debug("Staging table still exists before loading new file; dropping staging table")
-            r = self.execute_action("DROP TABLE staging;")
-            if r != "DROP TABLE":
-                self._logger.error("Unable to drop staging table")
-                raise ValueError("Unable to drop staging table before loading new file")
-        
-        col_and_type = ", ".join(f'{a} {b}' for a, b in csv_columns)
-        r1 = self.execute_action(f"CREATE TABLE staging ({col_and_type}); ")
-        if r1 != "CREATE TABLE":
-            self._logger.error("Failed to create staging table")
-            raise ValueError("Failed to create staging table before loading new file")
 
         col_types = [f"{b}" for _, b in csv_columns]
         r2 = self._import_csv(col_types=col_types, dest_table="staging", path_to_file=csv_path)
