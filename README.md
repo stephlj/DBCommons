@@ -75,5 +75,4 @@ Testing utils assumes "tests/fixtures" structure which is not what FinTrackr has
 
 `SQL_to_EDL.py` has several bugs with current Fintrackr schema.
 
-Add testing coverage - cram? for CLIs
-Fix bug in DBConn test - what type of error is Errno2?
+Add testing coverage - cram? for CLIs=
