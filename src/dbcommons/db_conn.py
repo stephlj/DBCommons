@@ -253,6 +253,8 @@ class DBConn:
             Columns in the csv which become columns in the staging table.
             Each tuple in the list is (col_name, col_type), eg ('posted date', 'date').
             Note types need to be strings not classes (can be obtained by <type>.__name__)
+            Note also that only col_type is now used by this function; but keeping col_name
+            improves interpretability
 
         Returns
         -------

@@ -44,7 +44,7 @@ def init_db(
         owner = config["db"]["admin_name"]
 
     with pkg_resources.as_file(
-        pkg_resources.files("dbcommons").joinpath("Init_New_db.sh")
+        pkg_resources.files("dbcommons").joinpath("Init_New_DB.sh")
     ) as script_path:
         subprocess.run(["chmod", "+x", str(script_path)])
         # check=True means execution will halt if there's a non-zero exit code
