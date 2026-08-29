@@ -14,10 +14,10 @@ from psycopg import errors as psql_errors
 class DBConn:
 
     def __init__(self, user: str, pw: str, db_name: str):
-        self.user = user
-        self.pw = pw
-        self.db_name = db_name
-        self._conn = psycopg.connect(f"dbname={self.db_name} user={self.user} password={self.pw} host='localhost'")
+        self._user = user
+        self._pw = pw
+        self._db_name = db_name
+        self._conn = psycopg.connect(f"dbname={self._db_name} user={self._user} password={self._pw} host='localhost'")
         self._conn.autocommit = True
 
         self._logger = logging.getLogger(__name__)
@@ -26,9 +26,20 @@ class DBConn:
         try:
             self._conn.close()
         except Exception as e:
-            # Ignore any erros during shutdown
             self._logger.exception("db_conn object failed to close")
+            # Ignore errors during shutdown - TODO this isn't ideal but otherwise the connection hangs ...
             pass
+    
+    def __del__(self):
+        # Fall back safety net to make sure connection is closed when garbage collected
+        self.close()
+
+    def __enter__(self):
+        # So that DBConn object can be used within a "with" clause
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
     
     def _import_csv(self, col_types: List[str], dest_table: str, path_to_file: str) -> None:
         """
