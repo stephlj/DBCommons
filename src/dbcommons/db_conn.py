@@ -171,7 +171,8 @@ class DBConn:
         exception classes. No try-except block here.
 
         Dataclass fields MUST MATCH COLUMN NAMES IN DB EXACTLY. Best way to ensure this is to use 
-        sql.SQL(",").join(sql.Identifier(f.name) for f in fields(cls)) in the query.
+        sql.SQL(",").join(sql.Identifier(f.name) for f in fields(cls)) in the query. See example
+        in test_dbconn.py.
 
         Parameters
         ----------
