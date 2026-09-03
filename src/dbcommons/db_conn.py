@@ -8,8 +8,9 @@ import psycopg
 import logging
 import os
 
-from typing import List
+from typing import List, Any
 from psycopg import errors as psql_errors
+from psycopg.rows import dict_row, class_row
 
 class DBConn:
 
@@ -148,15 +149,52 @@ class DBConn:
 
         Returns
         -------
-        List of tuples, or None
+        List of dicts, or None
             result of fetchall if the SQL has a RETURNING clause, 
             or None if the query is malformed/table doesn't exist/no RETURNING
-            Note to self: RETURNING in SQL returns a table; psycopg fetchall
-            turns this into a tuple of rows
+            Note to self: RETURNING in SQL returns a table; dict_row turns each row
+            into a dict, witih column names as keys
 
         """
 
-        with self._conn.cursor() as curs: 
+        with self._conn.cursor(row_factory=dict_row) as curs: 
+            self._logger.debug(f"Executing query: {query}, with vals: {vals}")
+            curs.execute(query, vals)
+            return curs.fetchall()
+        
+    def execute_query_w_class(self, query: str, return_class: Any, vals: tuple = ()) -> List[tuple] | None:
+        """
+        Returns the result of a fetch to the database, after query execution, as a class instance.
+
+        Calling function should handle expected exceptions (like violation of
+        unique constraints if duplicates are attempted to be inserted) via specific
+        exception classes. No try-except block here.
+
+        Dataclass fields MUST MATCH COLUMN NAMES IN DB EXACTLY. Best way to ensure this is to use 
+        sql.SQL(",").join(sql.Identifier(f.name) for f in fields(cls)) in the query.
+
+        Parameters
+        ----------
+        query : str
+            SELECT or INSERT statement to execute
+            (something where the return should be the result of a fetchall, rather 
+            than a status message)
+            Args need to be passed in separately using %s in the query string
+            (ie using parameterized SQL)
+        return_class : Any [dataclass]
+            Dataclass that conforms to the data model of the query return.
+        vals: tuple
+            Values, in order, for all %s's in the query string
+
+        Returns
+        -------
+        Dataclass, or None
+            result of fetchall if the SQL has a RETURNING clause, 
+            or None if the query is malformed/table doesn't exist/no RETURNING
+
+        """
+
+        with self._conn.cursor(row_factory=class_row(return_class)) as curs: 
             self._logger.debug(f"Executing query: {query}, with vals: {vals}")
             curs.execute(query, vals)
             return curs.fetchall() # Returns a list of tuples (each row a tuple)
