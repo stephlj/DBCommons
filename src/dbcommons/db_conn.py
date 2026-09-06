@@ -128,7 +128,7 @@ class DBConn:
             return curs.statusmessage
 
         
-    def execute_query(self, query: str, vals: tuple = ()) -> List[tuple] | None:
+    def execute_query(self, query: str, vals: tuple = ()) -> List[dict] | None:
         """
         Returns the result of a fetch to the database, after query execution.
 
@@ -162,7 +162,7 @@ class DBConn:
             curs.execute(query, vals)
             return curs.fetchall()
         
-    def execute_query_w_class(self, query: str, return_class: Any, vals: tuple = ()) -> List[tuple] | None:
+    def execute_query_w_class(self, query: str, return_class: Any, vals: tuple = ()) -> List[Any] | None:
         """
         Returns the result of a fetch to the database, after query execution, as a class instance.
 
@@ -192,13 +192,14 @@ class DBConn:
         Dataclass, or None
             result of fetchall if the SQL has a RETURNING clause, 
             or None if the query is malformed/table doesn't exist/no RETURNING
+            Each row is returned as return_class class
 
         """
 
         with self._conn.cursor(row_factory=class_row(return_class)) as curs: 
             self._logger.debug(f"Executing query: {query}, with vals: {vals}")
             curs.execute(query, vals)
-            return curs.fetchall() # Returns a list of tuples (each row a tuple)
+            return curs.fetchall()
         
     def execute_scalar(self, query: str, vals: tuple = ()) -> int | str | None:
         """
