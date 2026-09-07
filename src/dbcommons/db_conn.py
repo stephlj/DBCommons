@@ -9,8 +9,10 @@ import logging
 import os
 
 from typing import List, Any
+from dataclasses import fields, asdict
 from psycopg import errors as psql_errors
 from psycopg.rows import dict_row, class_row
+from psycopg import sql
 
 class DBConn:
 
@@ -200,6 +202,37 @@ class DBConn:
             self._logger.debug(f"Executing query: {query}, with vals: {vals}")
             curs.execute(query, vals)
             return curs.fetchall()
+        
+    def insert_many_w_class(self, tablename: str, insert_cls: List[Any]) -> int:
+        """
+        Use cursor.executemany() to insert multiple rows at once. Each row inserted will be an 
+        instance of insert_cls.
+
+        Parameters
+        ----------
+        tablename : str
+            Table to insert into
+        insert_cls : Any [dataclass]
+            Dataclass to insert, one per row. Dataclass field names and types must
+            match columns of table to insert into.
+        vals: tuple
+            Values, in order, for all %s's in the query string
+
+        Returns
+        -------
+        int, number of rows inserted
+        """
+
+        with self._conn.cursor() as curs: 
+            query = sql.SQL("INSERT INTO {name} ({cols}) VALUES ({val_str}) RETURNING COUNT(*);").format(name=tablename, 
+                                                                                                        cols=sql.SQL(",").join([sql.Identifier(f.name) for f in fields(insert_cls[0])]),
+                                                                                                        val_str=sql.SQL(",").join(f'%({sql.Identifier(f.name)})s' for f in fields(insert_cls[0])))
+                                                                                                                                  
+            vals = [asdict(c) for c in insert_cls]
+            self._logger.debug(f"Executing query: {query}, with vals: {vals}")
+            curs.executemany(query, vals)
+            return curs.fetchall()
+
         
     def execute_scalar(self, query: str, vals: tuple = ()) -> int | str | None:
         """

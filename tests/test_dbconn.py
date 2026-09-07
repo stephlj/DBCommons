@@ -9,6 +9,15 @@ from psycopg import sql
 import dbcommons.testing_utils as utils
 from dbcommons.db_conn import DBConn
 
+@dataclass
+class TestClass:
+    fruit: str
+    nums: float
+
+    def __iter__(self):
+        yield self.fruit
+        yield self.nums
+
 class TestDBConn(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -53,15 +62,17 @@ class TestDBConn(unittest.TestCase):
         self.assertEqual(r[0]['fruit'],'tomato')
 
     def test_execute_query_w_classs(self):
-        @dataclass
-        class test_class:
-            fruit: str
-            nums: float
 
-            def __iter__(self):
-                yield self.fruit
-                yield self.nums
-
-        q = sql.SQL("INSERT INTO test_table ({cols}) VALUES (%s, %s) RETURNING {cols};").format(cols=sql.SQL(",").join([sql.Identifier(f.name) for f in fields(test_class)]))
+        q = sql.SQL("INSERT INTO test_table ({cols}) VALUES (%s, %s) RETURNING {cols};").format(cols=sql.SQL(",").join([sql.Identifier(f.name) for f in fields(TestClass)]))
         r = self._conn.execute_query_w_class(query=q, return_class=test_class, vals=('watermelon',5.05))
         self.assertEqual(r[0].fruit,'watermelon')
+
+    def test_insert_many_w_class(self):
+        self.addCleanup(self._conn.execute_action, "DROP TABLE test_table;")
+
+        self._conn.execute_action("CREATE TABLE test_table;")
+        test_class_list = [TestClass(fruit='blackberry', nums=100.1), TestClass(fruit='blueberry', nums=200.2)]
+        
+        r = self._conn.insert_many_w_class(tablename='test_table', insert_cls=test_class_list)
+        self.assertEqual(r, 2)
+        
