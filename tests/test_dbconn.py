@@ -64,13 +64,15 @@ class TestDBConn(unittest.TestCase):
     def test_execute_query_w_classs(self):
 
         q = sql.SQL("INSERT INTO test_table ({cols}) VALUES (%s, %s) RETURNING {cols};").format(cols=sql.SQL(",").join([sql.Identifier(f.name) for f in fields(TestClass)]))
-        r = self._conn.execute_query_w_class(query=q, return_class=test_class, vals=('watermelon',5.05))
+        r = self._conn.execute_query_w_class(query=q, return_class=TestClass, vals=('watermelon',5.05))
         self.assertEqual(r[0].fruit,'watermelon')
 
     def test_insert_many_w_class(self):
         self.addCleanup(self._conn.execute_action, "DROP TABLE test_table;")
+        
+        create_q = sql.SQL("CREATE TABLE test_table ({cols});").format(cols=sql.SQL(",").join(f'{sql.Identifier(f.name)} {sql.Identifier(f.type.__name__)}' for f in fields(TestClass)))
+        self._conn.execute_action(create_q)
 
-        self._conn.execute_action("CREATE TABLE test_table;")
         test_class_list = [TestClass(fruit='blackberry', nums=100.1), TestClass(fruit='blueberry', nums=200.2)]
         
         r = self._conn.insert_many_w_class(tablename='test_table', insert_cls=test_class_list)
