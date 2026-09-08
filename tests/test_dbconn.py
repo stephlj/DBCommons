@@ -3,16 +3,16 @@
 import unittest
 import os
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, field
 from psycopg import sql
 
 import dbcommons.testing_utils as utils
 from dbcommons.db_conn import DBConn
 
 @dataclass
-class TestClass:
-    fruit: str
-    nums: float
+class FruitClass:
+    fruit: str = field(metadata={'sql_type':'text'})
+    nums: float = field(metadata={'sql_type':'real'})
 
     def __iter__(self):
         yield self.fruit
@@ -63,18 +63,17 @@ class TestDBConn(unittest.TestCase):
 
     def test_execute_query_w_classs(self):
 
-        q = sql.SQL("INSERT INTO test_table ({cols}) VALUES (%s, %s) RETURNING {cols};").format(cols=sql.SQL(",").join([sql.Identifier(f.name) for f in fields(TestClass)]))
-        r = self._conn.execute_query_w_class(query=q, return_class=TestClass, vals=('watermelon',5.05))
+        q = sql.SQL("INSERT INTO test_table ({cols}) VALUES (%s, %s) RETURNING {cols};").format(cols=sql.SQL(",").join([sql.Identifier(f.name) for f in fields(FruitClass)]))
+        r = self._conn.execute_query_w_class(query=q, return_class=FruitClass, vals=('watermelon',5.05))
         self.assertEqual(r[0].fruit,'watermelon')
 
     def test_insert_many_w_class(self):
-        self.addCleanup(self._conn.execute_action, "DROP TABLE test_table;")
+        self.addCleanup(self._conn.execute_action, "DROP TABLE staging;")
         
-        create_q = sql.SQL("CREATE TABLE test_table ({cols});").format(cols=sql.SQL(",").join(f'{sql.Identifier(f.name)} {sql.Identifier(f.type.__name__)}' for f in fields(TestClass)))
-        self._conn.execute_action(create_q)
+        self._conn.create_staging(col_defs=[(f.name, f.metadata['sql_type']) for f in fields(FruitClass)])
 
-        test_class_list = [TestClass(fruit='blackberry', nums=100.1), TestClass(fruit='blueberry', nums=200.2)]
+        test_class_list = [FruitClass(fruit='blackberry', nums=100.1), FruitClass(fruit='blueberry', nums=200.2)]
         
-        r = self._conn.insert_many_w_class(tablename='test_table', insert_cls=test_class_list)
+        r = self._conn.insert_many_w_class(tablename='staging', insert_cls=test_class_list)
         self.assertEqual(r, 2)
         

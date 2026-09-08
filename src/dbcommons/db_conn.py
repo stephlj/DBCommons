@@ -223,15 +223,16 @@ class DBConn:
         int, number of rows inserted
         """
 
-        with self._conn.cursor() as curs: 
-            query = sql.SQL("INSERT INTO {name} ({cols}) VALUES ({val_str}) RETURNING COUNT(*);").format(name=tablename, 
-                                                                                                        cols=sql.SQL(",").join([sql.Identifier(f.name) for f in fields(insert_cls[0])]),
-                                                                                                        val_str=sql.SQL(",").join(f'%({sql.Identifier(f.name)})s' for f in fields(insert_cls[0])))
+        with self._conn.cursor() as curs:
+            cols = [f.name for f in fields(insert_cls[0])]
+            query = sql.SQL("INSERT INTO {name} ({cols}) VALUES ({val_str});").format(name=sql.Identifier(tablename), 
+                                                                                    cols=sql.SQL(",").join(map(sql.Identifier, cols)),
+                                                                                    val_str=sql.SQL(",").join(map(sql.Placeholder, cols)))
                                                                                                                                   
             vals = [asdict(c) for c in insert_cls]
             self._logger.debug(f"Executing query: {query}, with vals: {vals}")
             curs.executemany(query, vals)
-            return curs.fetchall()
+            return curs.rowcount
 
         
     def execute_scalar(self, query: str, vals: tuple = ()) -> int | str | None:
