@@ -9,7 +9,7 @@ import logging
 import os
 
 from typing import List, Any
-from dataclasses import fields, asdict
+from dataclasses import fields, asdict, is_dataclass
 from psycopg import errors as psql_errors
 from psycopg.rows import dict_row, class_row
 from psycopg import sql
@@ -223,13 +223,27 @@ class DBConn:
         int, number of rows inserted
         """
 
+        # Support for nested dataclasses:
+        def _dataclass_to_flat_dict(obj: Any) -> dict:
+            """Flatten a (possibly nested) dataclass instance into a single flat dict,
+            descending only into nested dataclass fields."""
+            flat = {}
+            for f in fields(obj):
+                val = getattr(obj, f.name)
+                if is_dataclass(val):
+                    flat.update(_dataclass_to_flat_dict(val))
+                else:
+                    flat[f.name] = val
+            return flat
+
         with self._conn.cursor() as curs:
-            cols = [f.name for f in fields(insert_cls[0])]
+            # cols = [f.name for f in fields(insert_cls[0])]
+            # vals = [asdict(c) for c in insert_cls] # Breaks with nested dataclasses
+            vals = [_dataclass_to_flat_dict(c) for c in insert_cls]
+            cols = list(vals[0].keys())
             query = sql.SQL("INSERT INTO {name} ({cols}) VALUES ({val_str});").format(name=sql.Identifier(tablename), 
                                                                                     cols=sql.SQL(",").join(map(sql.Identifier, cols)),
-                                                                                    val_str=sql.SQL(",").join(map(sql.Placeholder, cols)))
-                                                                                                                                  
-            vals = [asdict(c) for c in insert_cls]
+                                                                                    val_str=sql.SQL(",").join(map(sql.Placeholder, cols)))                                                                                                              
             self._logger.debug(f"Executing query: {query}, with vals: {vals}")
             curs.executemany(query, vals)
             return curs.rowcount
