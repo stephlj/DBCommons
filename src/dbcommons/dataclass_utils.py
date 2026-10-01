@@ -26,7 +26,6 @@
 # 
 # Originally written by Claude, rewritten for clarity by Stephanie Johnson
 
-import os
 import csv
 
 from typing import TypeVar, Type, List, Tuple, Iterator, Any, get_type_hints

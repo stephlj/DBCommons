@@ -8,13 +8,21 @@ import psycopg
 import logging
 import os
 
-from typing import List, Any
+from typing import List, Any, TypeVar
 from psycopg import errors as psql_errors
 from psycopg.rows import dict_row, class_row
 from psycopg import sql
 
 from dbcommons.dataclass_utils import dataclass_to_flat_dict
 from dbcommons.utils import check_csv_path
+
+# Assign a type, to be established when a function is called, to variable T.
+# This is only used for type hints, but allows us to say: def func(input: T) -> T
+# and indicate that the arg and return are both the same type. Using "Any"
+# would lose track of that type. Since none of the dataclasses these utilities
+# use are defined here, we can't define the type these functions handle
+# until runtime.
+T = TypeVar("T")
 
 class DBConn:
 
@@ -158,7 +166,7 @@ class DBConn:
             curs.execute(query, vals)
             return curs.fetchall()
         
-    def execute_query_w_class(self, query: str, return_class: Any, vals: tuple = ()) -> List[Any] | None:
+    def execute_query_w_class(self, query: str, return_class: T, vals: tuple = ()) -> List[T] | None:
         """
         Returns the result of a fetch to the database, after query execution, as a class instance.
 
@@ -209,8 +217,6 @@ class DBConn:
         insert_cls : Any [dataclass]
             Dataclass to insert, one per row. Dataclass field names and types must
             match columns of table to insert into.
-        vals: tuple
-            Values, in order, for all %s's in the query string
 
         Returns
         -------
