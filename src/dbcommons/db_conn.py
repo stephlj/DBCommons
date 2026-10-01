@@ -8,7 +8,7 @@ import psycopg
 import logging
 import os
 
-from typing import List, Any, TypeVar
+from typing import List, Any, TypeVar, Type
 from psycopg import errors as psql_errors
 from psycopg.rows import dict_row, class_row
 from psycopg import sql
@@ -166,7 +166,7 @@ class DBConn:
             curs.execute(query, vals)
             return curs.fetchall()
         
-    def execute_query_w_class(self, query: str, return_class: T, vals: tuple = ()) -> List[T] | None:
+    def execute_query_w_class(self, query: str, return_class: Type[T], vals: tuple = ()) -> List[T] | None:
         """
         Returns the result of a fetch to the database, after query execution, as a class instance.
 
