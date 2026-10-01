@@ -78,7 +78,7 @@ def _from_flat_row(cls: Type[T], row: dict) -> T:
 
 def dataclass_to_flat_dict(obj: Any) -> dict:
     """
-    Dict of {field name: field val} constructed from the dataclass `obj`,
+    Dict of {field name: field val} constructed from the dataclass instance `obj`,
     with any nested dataclasses flattened.
     """
     flat = {}

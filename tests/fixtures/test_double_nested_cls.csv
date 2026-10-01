@@ -1,0 +1,3 @@
+label,box_label,weight,shiny,length,width,unit_category
+Inner,DontShip,1.5,0,10.5,2.5,lbs
+outer,Ship,0.1,1,10.1,0.1, c

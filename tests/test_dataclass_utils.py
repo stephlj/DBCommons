@@ -40,6 +40,11 @@ class GizmoDupName:
     shiny: bool = field(metadata={'sql_type': 'boolean', 'csv_parser': lambda s: bool(int(s))})
     size_info: NestedGizmo
 
+@dataclass
+class BoxedGizmo:
+    box_label: str = field(metadata={'sql_type': 'text', 'csv_parser': lambda s: s})
+    gizmo: Gizmo
+
 class TestDataclassUtils(unittest.TestCase):
 
     def _write_tmp_csv(self, text: str) -> str:
@@ -75,6 +80,18 @@ class TestDataclassUtils(unittest.TestCase):
             ])
             self.assertNotIn('size_info', [name for name, _ in defs]) # The name of the nested dataclass shouldn't appear
 
+        with self.subTest("Test two levels of nesting"):
+            defs = flat_col_defs(BoxedGizmo)
+            self.assertEqual(defs, [('box_label', 'text'),
+                            ('label', 'text'),
+                            ('weight', 'real'),
+                            ('shiny', 'boolean'),
+                            ('length', 'real'),
+                            ('width', 'real'),
+                            ('unit_category', 'text')])
+            self.assertNotIn('gizmo', [name for name, _ in defs])
+            self.assertNotIn('size_info', [name for name, _ in defs])
+        
         with self.subTest("Test that we error if the nested dataclass has a name clash"):
             with self.assertRaises(ValueError):
                 defs = flat_col_defs(GizmoDupName)
@@ -100,6 +117,11 @@ class TestDataclassUtils(unittest.TestCase):
             self.assertEqual(dataclass_to_flat_dict(nested_obj),
                              {'label':'outer', 'weight':2.0, 'shiny':True, 'length':20.2, 'width':5.5, 'unit_category':'length'})
 
+        double_nest = BoxedGizmo(box_label='Ship',gizmo=nested_obj)
+        with self.subTest("Test two levels of nesting"):
+            self.assertEqual(dataclass_to_flat_dict(double_nest),
+                             {'box_label':'Ship','label':'outer', 'weight':2.0, 'shiny':True, 'length':20.2, 'width':5.5, 'unit_category':'length'})
+
         # Test that we can resolve dataclasses from modules with `from __future__ import annotations`
         # First: make sure the test is still set up correctly:
         # if the __future__ import is ever removed from str_annot_dataclasses,
@@ -110,6 +132,20 @@ class TestDataclassUtils(unittest.TestCase):
             self.assertEqual(dataclass_to_flat_dict(obj),
                          {'name': 'outer', 'label': 'Sprocket', 'weight': 2.5})
 
+    def test_flat_dict_keys_match_flat_col_defs(self):
+        # The whole point of many of the dataclass_utils is to ensure db columns (or at least the columns
+        # assigned to a staging table) match the dataclass holding data to be inserted. Check for parity
+        # between flat_col_defs, which defines staging table cols, and flat_dict_keys, which has field names
+        # of the dataclass obj to insert. Do this for all variations of nesting, etc
+        flat_obj = FlatGizmo(label='inner',weight=1.5,shiny=False,size_units='lb')
+        nested_obj = Gizmo(label='outer', weight=2.0, shiny=True, size_info=NestedGizmo(length=20.2, width=5.5, unit_category='length'))
+        double_nest = BoxedGizmo(box_label='Ship',gizmo=nested_obj)
+        str_annot_obj = StrAnnotNestedGizmo(name='outer', gizmo=StrAnnotGizmo(label='Sprocket', weight=2.5))
+        for obj in [flat_obj, nested_obj, str_annot_obj, double_nest]:
+            with self.subTest(type(obj).__name__):
+                self.assertEqual(list(dataclass_to_flat_dict(obj)),
+                                [n for n, _ in flat_col_defs(type(obj))])
+    
     def test_csv_to_dataclass(self):
         # Test generic behavior loading csvs to a dataclass.
         # Note the csv columns are in a different order than *Gizmo's fields: correspondence
@@ -159,9 +195,15 @@ class TestDataclassUtils(unittest.TestCase):
         self.assertEqual(nested_gizmo[0].size_info.length, 10.5)          # nested value
         self.assertEqual(nested_gizmo[1].size_info.unit_category, 'c')     # ' c' -> 'c', from a lamba function
 
+        # Test two levels of nesting
+        double_nested = csv_to_dataclass(
+            path_to_csv=os.path.join(TEST_DATA_PATH, "test_double_nested_cls.csv"), cls=BoxedGizmo)
+        self.assertEqual(double_nested[1].box_label, 'Ship')
+        self.assertEqual(double_nested[0].gizmo.label, 'Inner')
+        self.assertEqual(double_nested[1].gizmo.size_info.length, 10.1)
+        
         # Test nested dataclasses with string annotation
         path = self._write_tmp_csv("weight,name,label\n2.5,outer,Sprocket\n")
-        # TODO I think this assertion is wrong?
         self.assertEqual(csv_to_dataclass(path_to_csv=path, cls=StrAnnotNestedGizmo),
                          [StrAnnotNestedGizmo(name='outer', gizmo=StrAnnotGizmo(label='Sprocket', weight=2.5))])
 
