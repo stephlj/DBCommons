@@ -5,10 +5,13 @@ Copyright (c) 2026 Stephanie Johnson
 """
 
 import os
+import logging
 
 DEFAULT_LOGGING_FORMAT = (
     "%(levelname)s %(asctime)-15s @ %(module)s.%(funcName)s.%(lineno)d - %(msg)s"
 )
+
+logger = logging.getLogger(__name__)
 
 def check_csv_path(path_to_file: str)->None:
     # Helper function used by functions and methods that take csvs as inputs - 
@@ -17,8 +20,10 @@ def check_csv_path(path_to_file: str)->None:
 
     if not os.path.isfile(path_to_file):
         msg = f"{path_to_file} not a path to a file that exists"
+        logger.error(msg)
         raise ValueError(msg)
     
     if not os.path.splitext(path_to_file)[1] == ".csv":
         msg = f"{path_to_file} not a csv"
+        logger.error(msg)
         raise ValueError(msg)

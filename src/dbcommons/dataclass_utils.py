@@ -32,12 +32,15 @@
 # 
 # Originally written by Claude, rewritten for clarity by Stephanie Johnson
 
+import logging
 import csv
 
 from typing import TypeVar, Type, List, Tuple, Iterator, Any, get_type_hints
 from dataclasses import fields, Field, is_dataclass
 
 from dbcommons.utils import check_csv_path
+
+logger = logging.getLogger(__name__)
 
 # Assign a type, to be established when a function is called, to variable T.
 # This is only used for type hints, but allows us to say: def func(input: T) -> T
@@ -106,7 +109,9 @@ def flat_col_defs(cls: type) -> List[Tuple[str, str]]:
     # even if they're of different types
     names = [n for n,_ in defs]
     if len(names) != len(set(names)):
-        raise ValueError("A nested dataclass has the same field name as the parent class; this isn't allowed!")
+        msg = "A nested dataclass has the same field name as the parent class; this isn't allowed!"
+        logger.error(msg)
+        raise ValueError(msg)
     return defs
 
 def csv_to_dataclass(path_to_csv: str, cls: Type[T]) -> List[T]:
@@ -140,6 +145,17 @@ def csv_to_dataclass(path_to_csv: str, cls: Type[T]) -> List[T]:
         reader = csv.DictReader(f)
         if set(reader.fieldnames or []) != set(expected_cols):
             msg = f"Wrong header in {path_to_csv}: needs to be {expected_cols} (instead of {reader.fieldnames})"
+            logger.error(msg)
             raise ValueError(msg)
 
-        return [_from_flat_row(cls, r) for r in reader]
+        # return [_from_flat_row(cls, r) for r in reader]
+        # More verbose, but so I can catch particular errors:
+        objs = []
+        for line_num, r in enumerate(reader, start=2):  # line 1 is the header
+            try:
+                objs.append(_from_flat_row(cls, r))
+            except (ValueError, KeyError) as e:
+                msg = f"{path_to_csv} line {line_num}: could not parse row {r} into {cls.__name__}: {e}"
+                logger.error(msg)
+                raise ValueError(msg) from e
+        return objs
