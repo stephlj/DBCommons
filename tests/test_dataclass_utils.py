@@ -35,7 +35,7 @@ class Gizmo:
 
 @dataclass
 class GizmoDupName:
-    unit_category: str = field(metadata={'sql_type': 'text', 'csv_parser': lambda s: s})
+    unit_category: float = field(metadata={'sql_type': 'real', 'csv_parser': lambda s: float(s)}) # different type than NestedGizmo.unit_category, to make sure we clash on name
     weight: float = field(metadata={'sql_type': 'real', 'csv_parser': lambda s: float(s)})
     shiny: bool = field(metadata={'sql_type': 'boolean', 'csv_parser': lambda s: bool(int(s))})
     size_info: NestedGizmo

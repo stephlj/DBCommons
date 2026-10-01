@@ -96,7 +96,10 @@ def flat_col_defs(cls: type) -> List[Tuple[str, str]]:
     Nested dataclasses are flattened.
     """
     defs = [(f.name, f.metadata['sql_type']) for f in _leaf_fields(cls)]
-    if len(defs) != len(set(defs)):
+    # We don't allow nested dataclass fields to have the same names as parent fields,
+    # even if they're of different types
+    names = [n for n,_ in defs]
+    if len(names) != len(set(names)):
         raise ValueError("A nested dataclass has the same field name as the parent class; this isn't allowed!")
     return defs
 
