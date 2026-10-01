@@ -177,6 +177,8 @@ class DBConn:
         sql.SQL(",").join(sql.Identifier(f.name) for f in fields(cls)) in the query. See example
         in test_dbconn.py.
 
+        Nested dataclasses as the return_class are NOT SUPPORTED.
+
         Parameters
         ----------
         query : str
