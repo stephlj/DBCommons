@@ -77,6 +77,10 @@ def _from_flat_row(cls: Type[T], row: dict) -> T:
     return cls(**kwargs)
 
 def dataclass_to_flat_dict(obj: Any) -> dict:
+    """
+    Dict of {field name: field val} constructed from the dataclass `obj`,
+    with any nested dataclasses flattened.
+    """
     flat = {}
     for f, field_type in _fields_and_types(type(obj)):
         val = getattr(obj, f.name)
@@ -96,7 +100,7 @@ def flat_col_defs(cls: type) -> List[Tuple[str, str]]:
         raise ValueError("A nested dataclass has the same field name as the parent class; this isn't allowed!")
     return defs
 
-def csv_to_dataclass(self, path_to_csv: str, cls: Type[T]) -> List[T]:
+def csv_to_dataclass(path_to_csv: str, cls: Type[T]) -> List[T]:
     """
     Load a csv into a list of `cls` objects, one per row.
 
@@ -127,7 +131,6 @@ def csv_to_dataclass(self, path_to_csv: str, cls: Type[T]) -> List[T]:
         reader = csv.DictReader(f)
         if set(reader.fieldnames or []) != set(expected_cols):
             msg = f"Wrong header in {path_to_csv}: needs to be {expected_cols} (instead of {reader.fieldnames})"
-            self._logger.error(msg)
             raise ValueError(msg)
 
         return [_from_flat_row(cls, r) for r in reader]
