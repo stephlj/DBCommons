@@ -6,7 +6,6 @@ Copyright (c) 2025, 2026 Stephanie Johnson
 
 import psycopg
 import logging
-import os
 
 from typing import List, Any, TypeVar, Type
 from psycopg import errors as psql_errors

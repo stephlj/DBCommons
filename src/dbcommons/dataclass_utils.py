@@ -12,15 +12,21 @@
 #    else:
 #        return 'somethingelse'
 #
+# @dataclass
 # class X:
 #    field_that_is_a_number: float = field(metadata={'sql_type':'real', 'csv_parser': lambda s: float(s)})
 #    field_needing_special_import: str = field(metadata={'sql_type':'text', 'csv_parser': special_import_handling})
 #
-# To return a list of tuples of (column name, sql type):
+# The way the field metadata works: 
+# To return a list of tuples of (column name, sql type) for a NON-NESTED dataclass:
 # col_defs_sql = [(f.name, f.metadata['sql_type']) for f in fields(X)]
-#
 # The same but returning python data types:
 # col_defs_python = [(f.name, f.type.__name__) for f in fields(X)]
+#
+# This doesn't work for nested dataclasses, though, so a key utility here is
+# flat_col_defs. This returns (field_name, sql_type) for a flat or nested
+# dataclass. (No equivalent has been implemented for python types, since these 
+# utilities define sql columns and types from dataclasses for import of data into the db).
 # 
 # Nested dataclasses are flattened recursively before csv schemas are defined.
 # 

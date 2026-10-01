@@ -7,7 +7,7 @@ from dataclasses import dataclass, fields, field
 from psycopg import sql
 
 import dbcommons.testing_utils as utils
-from dbcommons.dataclass_utils import flat_col_defs, dataclass_to_flat_dict
+from dbcommons.dataclass_utils import flat_col_defs
 from dbcommons.db_conn import DBConn
 
 @dataclass
