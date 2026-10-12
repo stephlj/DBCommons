@@ -124,4 +124,3 @@ class TestDBConn(unittest.TestCase):
         r = self._conn.insert_many_w_class(tablename='staging', insert_obj_list=test_class_list)
         self.assertEqual(r, 2)
         self.assertFalse(self._conn.execute_scalar(query="SELECT baby_bear FROM staging WHERE fruit=%s", vals=('blueberry',)))
-        
