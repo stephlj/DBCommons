@@ -101,7 +101,7 @@ class TestDBConn(unittest.TestCase):
 
         test_class_list = [FruitClass(fruit='blackberry', nums=100.1), FruitClass(fruit='blueberry', nums=200.2)]
         
-        r = self._conn.insert_many_w_class(tablename='staging', insert_cls=test_class_list)
+        r = self._conn.insert_many_w_class(tablename='staging', insert_obj_list=test_class_list)
         self.assertEqual(r, 2)
 
     def test_insert_many_w_class_nested(self):
@@ -121,7 +121,7 @@ class TestDBConn(unittest.TestCase):
                                                         papa_bear=True,
                                                         baby_bear=False))]
         
-        r = self._conn.insert_many_w_class(tablename='staging', insert_cls=test_class_list)
+        r = self._conn.insert_many_w_class(tablename='staging', insert_obj_list=test_class_list)
         self.assertEqual(r, 2)
         self.assertFalse(self._conn.execute_scalar(query="SELECT baby_bear FROM staging WHERE fruit=%s", vals=('blueberry',)))
         
