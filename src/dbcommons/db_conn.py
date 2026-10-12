@@ -206,17 +206,17 @@ class DBConn:
             curs.execute(query, vals)
             return curs.fetchall()
         
-    def insert_many_w_class(self, tablename: str, insert_cls: List[Any]) -> int:
+    def insert_many_w_class(self, tablename: str, insert_obj_list: List[Any]) -> int:
         """
         Use cursor.executemany() to insert multiple rows at once. Each row inserted will be an 
-        instance of insert_cls.
+        object (dataclass).
 
         Parameters
         ----------
         tablename : str
             Table to insert into
-        insert_cls : Any [dataclass]
-            Dataclass to insert, one per row. Dataclass field names and types must
+        insert_obj_list : Any [dataclass]
+            Dataclass instances to insert, one per row. Dataclass field names and types must
             match columns of table to insert into.
 
         Returns
@@ -225,9 +225,9 @@ class DBConn:
         """
 
         with self._conn.cursor() as curs:
-            # cols = [f.name for f in fields(insert_cls[0])]
-            # vals = [asdict(c) for c in insert_cls] # Breaks with nested dataclasses
-            vals = [dataclass_to_flat_dict(c) for c in insert_cls]
+            # cols = [f.name for f in fields(insert_obj_list[0])]
+            # vals = [asdict(c) for c in insert_obj_list] # Breaks with nested dataclasses
+            vals = [dataclass_to_flat_dict(c) for c in insert_obj_list]
             cols = list(vals[0].keys())
             query = sql.SQL("INSERT INTO {name} ({cols}) VALUES ({val_str});").format(name=sql.Identifier(tablename), 
                                                                                     cols=sql.SQL(",").join(map(sql.Identifier, cols)),
@@ -370,3 +370,10 @@ class DBConn:
         self._logger.debug(f"After loading new transactions, staging has {rows_after} rows")
 
         return rows_after
+
+    def class_to_staging(self, insert_obj_list: List[Any]) -> int:
+        # Insert a list of dataclasses into staging table.
+        # Staging must already be created.
+        # Return num rows inserted into staging.
+
+        return self.insert_many_w_class(tablename='staging', insert_obj_list=insert_obj_list)
