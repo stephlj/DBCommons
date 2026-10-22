@@ -54,7 +54,7 @@ input data, etc).
 
 This package uses `uv` for package and virtual environment management, based on the very helpful tutorials at [Sebastia Agramunt Puig's blog](https://agramunt.me/posts/python-virtual-environments-with-uv/).
 
-Create the environment with `uv venv .venv` and then run `uv sync --all-extras` (to get developer extras).
+Create the environment with `uv venv .venv` and then run `uv sync`, which installs the exact versions in `uv.lock`, including the `dev` dependency group (tools only needed for development, like `pytest`).
 
 Activate with `source .venv/bin/activate`.
 

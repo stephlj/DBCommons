@@ -17,16 +17,22 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "psycopg" },
-    { name = "pytest" },
     { name = "pyyaml" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "psycopg", specifier = ">=3.3.3" },
-    { name = "pytest", specifier = ">=9.0.3" },
     { name = "pyyaml", specifier = ">=6.0.3" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.0.3" }]
 
 [[package]]
 name = "iniconfig"
