@@ -88,8 +88,7 @@ utils.tear_down_test_DB(db_conn = conn, params = params)
 
 ## TODO
 
-- Testing utils assumes "tests/fixtures" structure which is not what FinTrackr has - change (probably in FinTrackr)
-- `SQL_to_EDL.py` has several bugs with current Fintrackr schema.
+- `SQL_to_EDL.py` has several bugs with current Fintrackr and ForkWise schemas.
 - Add testing coverage - cram? for CLIs
 - Extend support for nested dataclasses in `execute_query_w_class`. Plan suggested by Claude:
 `execute_query_w_class` uses psycopg's `class_row(return_class)`, which calls `return_class(**row)` with the query's flat column names. For `NestedFruit` (an example in the testing suite), that means `NestedFruit(fruit=..., nums=..., mama_bear=..., ...)`, which raises `TypeError` for the unexpected keyword `mama_bear`. Nothing turns the flat row back into a nested object.
