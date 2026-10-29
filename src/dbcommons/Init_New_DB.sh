@@ -8,6 +8,8 @@
 #
 # Copyright (c) 2025 Stephanie Johnson
 
+set -e
+
 psql -d postgres -c "CREATE ROLE $2 WITH LOGIN PASSWORD '$3' CREATEDB CREATEROLE;"
 createdb $1 -O $2
 psql -d postgres -c "REVOKE CONNECT ON DATABASE $1 FROM PUBLIC;"
@@ -15,5 +17,5 @@ psql -d postgres -c "GRANT CONNECT ON DATABASE $1 TO $2;"
 # Changed to using cur.copy_expert, so this line shouldn't be necessary anymore:
 # psql -d postgres -c "GRANT pg_read_server_files TO $2 WITH ADMIN OPTION;"
 
-PGPASSWORD=$3 psql -h localhost -d $1 -U $2 < $4
+PGPASSWORD=$3 psql -v ON_ERROR_STOP=1 -h localhost -d $1 -U $2 < $4
   
